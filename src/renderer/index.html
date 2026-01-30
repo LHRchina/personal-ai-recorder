@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; media-src 'self' blob: file:; connect-src 'self' https://huggingface.co https://cdn-lfs.huggingface.co https://*.hf.co blob:; worker-src 'self' blob:;">
+  <title>Audio Recorder</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Draggable title bar area -->
+    <div class="title-bar">
+      <div class="window-controls">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+      </div>
+      <span class="app-title">Audio Recorder</span>
+      <button class="settings-btn" id="settingsBtn" title="Settings">
+        <svg class="icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <!-- Audio visualization -->
+      <div class="visualization-container">
+        <canvas id="waveform" width="400" height="120"></canvas>
+        <div class="recording-indicator" id="recordingIndicator">
+          <span class="pulse-dot"></span>
+          <span>Recording</span>
+        </div>
+      </div>
+
+      <!-- Timer display -->
+      <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+      <!-- Source type toggle -->
+      <div class="source-toggle">
+        <button class="source-btn active" id="systemAudioBtn" data-source="system">
+          <svg class="icon" viewBox="0 0 24 24">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="12" y1="18" x2="12" y2="18.01"></line>
+          </svg>
+          <span>System Audio</span>
+        </button>
+        <button class="source-btn" id="bothAudioBtn" data-source="both">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+            <circle cx="17" cy="6" r="3" fill="currentColor"></circle>
+          </svg>
+          <span>Both</span>
+        </button>
+        <button class="source-btn" id="microphoneBtn" data-source="microphone">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <span>Microphone</span>
+        </button>
+      </div>
+
+      <!-- Device selector -->
+      <div class="device-selector">
+        <label for="audioDevice" id="deviceLabel">Audio Device</label>
+        <select id="audioDevice">
+          <option value="">Loading devices...</option>
+        </select>
+      </div>
+
+      <!-- System audio info (shown when system audio is selected) -->
+      <div class="system-audio-info" id="systemAudioInfo">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Click Record to capture screen audio. May need <strong>BlackHole</strong> for best results.</span>
+        <button class="setup-help-trigger" id="showSetupHelpBtn" title="Setup Help">?</button>
+      </div>
+
+      <!-- Recording controls -->
+      <div class="controls">
+        <button class="control-btn secondary" id="pauseBtn" disabled>
+          <svg class="icon" viewBox="0 0 24 24" id="pauseIcon">
+            <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+            <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+          </svg>
+          <svg class="icon hidden" viewBox="0 0 24 24" id="resumeIcon">
+            <polygon points="5,3 19,12 5,21"></polygon>
+          </svg>
+        </button>
+        <button class="control-btn primary" id="recordBtn">
+          <span class="record-circle"></span>
+        </button>
+        <button class="control-btn secondary" id="stopBtn" disabled>
+          <svg class="icon" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <!-- Recordings list -->
+    <section class="recordings-section">
+      <div class="recordings-header">
+        <h2>Recordings</h2>
+        <button class="folder-btn" id="openFolderBtn" title="Open recordings folder">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="recordings-list" id="recordingsList">
+        <div class="empty-state">
+          <svg class="empty-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+          <p>No recordings yet</p>
+          <span>Click the red button to start recording</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transcription Modal -->
+    <div class="modal-overlay" id="transcriptionModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Transcription</h3>
+          <button class="modal-close-btn" id="closeTranscriptionBtn">
+            <svg viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="transcription-status" id="transcriptionStatus">
+          <span class="status-icon">📝</span>
+          <span class="status-text">Ready to transcribe</span>
+        </div>
+        <div class="transcription-content">
+          <textarea id="transcriptionText" readonly placeholder="Transcription will appear here..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn secondary" id="copyTranscriptionBtn">
+            <svg viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Text
+          </button>
+          <button class="action-btn primary" id="saveTranscriptionBtn">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3>Settings</h3>
+          <button class="modal-close-btn" id="closeSettingsBtn">
+            <svg viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="settings-content">
+          <div class="setting-group">
+            <label for="apiKeyInput">OpenAI API Key</label>
+            <p class="setting-desc">Optional. If not provided, Local Whisper will be used automatically (if installed).</p>
+            <input type="password" id="apiKeyInput" placeholder="sk-... (leave empty to use Local Whisper)" autocomplete="off">
+          </div>
+          <div class="setting-group">
+            <label>Transcription Method</label>
+            <p class="setting-desc">Choose your preferred method. Falls back to Local if no API key.</p>
+            <div class="method-toggle">
+              <button class="method-btn" id="localMethodBtn" data-method="local">
+                <svg viewBox="0 0 24 24">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                Local Whisper
+              </button>
+              <button class="method-btn active" id="openaiMethodBtn" data-method="openai">
+                <svg viewBox="0 0 24 24">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                OpenAI API
+              </button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label>Storage Location</label>
+            <p class="setting-desc">Where recordings are saved</p>
+            <div class="path-input-group">
+              <input type="text" id="storagePathInput" readonly placeholder="Loading...">
+              <button class="browse-btn" id="browsePathBtn" title="Browse">
+                <svg viewBox="0 0 24 24">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+              <button class="reset-btn" id="resetPathBtn" title="Reset to default">
+                <svg viewBox="0 0 24 24">
+                  <polyline points="1 4 1 10 7 10"></polyline>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn primary" id="saveSettingsBtn">
+            <svg viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- System Audio Setup Help Modal -->
+  <div class="modal-overlay" id="setupHelpModal">
+    <div class="modal-content help-modal">
+      <div class="modal-header">
+        <h2>
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          System Audio Setup Required
+        </h2>
+        <button class="close-btn" id="closeSetupHelpBtn">
+          <svg viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body help-body">
+        <div class="help-alert">
+          <svg viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>No virtual audio device detected. macOS requires a virtual audio driver to capture system audio.</span>
+        </div>
+
+        <div class="help-section">
+          <h3>📦 Step 1: Install BlackHole</h3>
+          <p>Open Terminal and run:</p>
+          <div class="code-block">
+            <code>brew install blackhole-2ch</code>
+            <button class="copy-code-btn" data-code="brew install blackhole-2ch" title="Copy">
+              <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+          <p class="note">After installation, restart your Mac.</p>
+        </div>
+
+        <div class="help-section">
+          <h3>🔊 Step 2: Create Multi-Output Device</h3>
+          <ol>
+            <li>Open <strong>Audio MIDI Setup</strong> (search in Spotlight)</li>
+            <li>Click <strong>+</strong> in bottom left → <strong>Create Multi-Output Device</strong></li>
+            <li>Check both <strong>BlackHole 2ch</strong> and your <strong>speakers/headphones</strong></li>
+            <li>Right-click the Multi-Output Device → <strong>Use This Device for Sound Output</strong></li>
+          </ol>
+        </div>
+
+        <div class="help-section">
+          <h3>🎤 Step 3: Select in Recorder</h3>
+          <ol>
+            <li>In this app, select <strong>System Audio</strong> mode</li>
+            <li>Choose <strong>🎵 BlackHole 2ch</strong> from the device dropdown</li>
+            <li>Start recording!</li>
+          </ol>
+        </div>
+
+        <div class="help-tip">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>After setup, BlackHole will appear in the device list with a 🎵 icon.</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <a href="https://github.com/ExistentialAudio/BlackHole" target="_blank" class="action-btn secondary">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          Learn More
+        </a>
+        <button class="action-btn primary" id="closeSetupHelpBtn2">
+          Got It
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="transcription.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
