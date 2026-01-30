@@ -234,16 +234,20 @@ ipcMain.handle('convert-to-mp3', async (event, inputPath) => {
       return resolve({ success: true, path: outputPath, alreadyExists: true });
     }
 
-    // Find ffmpeg path - prioritize current directory
+    // Find ffmpeg path - prioritize bundled ffmpeg, then system paths
+    // In packaged app, ffmpeg is in extraResources (Contents/Resources on macOS)
+    const resourcesPath = process.resourcesPath;
     const ffmpegPaths = [
-      path.join(__dirname, 'ffmpeg'),
-      path.join(__dirname, 'bin', 'ffmpeg'),
-      path.join(app.getAppPath(), 'ffmpeg'),
-      path.join(app.getAppPath(), 'bin', 'ffmpeg'),
-      '/opt/homebrew/bin/ffmpeg',
-      '/usr/local/bin/ffmpeg',
-      '/usr/bin/ffmpeg',
-      'ffmpeg'
+      path.join(__dirname, 'ffmpeg'),                                    // Dev: project root
+      path.join(__dirname, '..', 'ffmpeg'),                            // Dev: parent of src
+      path.join(resourcesPath, 'ffmpeg'),                              // Packaged: extraResources
+      path.join(resourcesPath, 'app', 'ffmpeg'),                       // Alternative location
+      path.join(resourcesPath, 'app.asar.unpacked', 'ffmpeg'),         // Unpacked from asar
+      path.join(app.getAppPath(), 'ffmpeg'),                           // App root
+      '/opt/homebrew/bin/ffmpeg',                                      // Homebrew (Apple Silicon)
+      '/usr/local/bin/ffmpeg',                                         // Homebrew (Intel)
+      '/usr/bin/ffmpeg',                                               // System
+      'ffmpeg'                                                         // PATH
     ];
 
     let ffmpegPath = 'ffmpeg';

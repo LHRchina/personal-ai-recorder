@@ -6,9 +6,10 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --enable-logging",
-    "build": "electron-builder --mac",
-    "build:dmg": "electron-builder --mac dmg",
-    "build:zip": "electron-builder --mac zip"
+    "build": "npm run verify-ffmpeg && electron-builder --mac",
+    "build:dmg": "npm run verify-ffmpeg && electron-builder --mac dmg",
+    "build:zip": "npm run verify-ffmpeg && electron-builder --mac zip",
+    "verify-ffmpeg": "node -e \"if(require('fs').existsSync('ffmpeg')){console.log('✓ FFmpeg found');process.exit(0)}else{console.error('✗ FFmpeg not found in project root');process.exit(1)}\""
   },
   "keywords": [
     "audio",
