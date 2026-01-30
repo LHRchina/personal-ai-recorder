@@ -2,7 +2,7 @@
 
 A powerful macOS audio recording application built with Electron, designed for capturing meeting audio (Teams, Zoom, Google Meet, etc.) with built-in transcription support.
 
-![Audio Recorder Screenshot](assets/screenshot.png)
+![Audio Recorder Screenshot](assets/interface.png)
 
 ## Features
 
@@ -38,7 +38,7 @@ A powerful macOS audio recording application built with Electron, designed for c
 ### Prerequisites
 
 - macOS 10.15 (Catalina) or later
-- [Node.js](https://nodejs.org/) 18+ 
+- [Node.js](https://nodejs.org/) 18+
 - (Optional) [Python 3](https://www.python.org/) for Local Whisper transcription
 - (Optional) [BlackHole](https://github.com/ExistentialAudio/BlackHole) virtual audio driver for best system audio quality
 
@@ -157,9 +157,11 @@ The app will automatically detect and use Local Whisper if available.
 ### Transcription Not Working
 
 **Option A - Use OpenAI API:**
+
 - Add your API key in Settings
 
 **Option B - Use Local Whisper:**
+
 ```bash
 pip install openai-whisper
 ```
