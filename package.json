@@ -40,6 +40,7 @@
       "entitlements": "entitlements.plist",
       "entitlementsInherit": "entitlements.plist"
     },
+    "beforeBuild": "node scripts/pre-build.js",
     "dmg": {
       "title": "Audio Recorder",
       "contents": [
@@ -59,8 +60,7 @@
       "main.js",
       "preload.js",
       "src/**/*",
-      "assets/**/*",
-      "ffmpeg"
+      "assets/**/*"
     ],
     "extraResources": [
       {
