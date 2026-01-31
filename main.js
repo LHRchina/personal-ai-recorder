@@ -4,19 +4,25 @@ const fs = require('fs');
 
 let mainWindow;
 
-// Settings file path
-const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+// Settings file path (lazy loaded)
+let settingsPath;
+let tempRecordingsDir;
 
-// Temp recordings directory for streaming recording
-const tempRecordingsDir = path.join(app.getPath('userData'), 'temp_recordings');
-
-// Ensure temp directory exists
-if (!fs.existsSync(tempRecordingsDir)) {
-  fs.mkdirSync(tempRecordingsDir, { recursive: true });
+function initPaths() {
+  if (!settingsPath) {
+    settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    tempRecordingsDir = path.join(app.getPath('userData'), 'temp_recordings');
+    
+    // Ensure temp directory exists
+    if (!fs.existsSync(tempRecordingsDir)) {
+      fs.mkdirSync(tempRecordingsDir, { recursive: true });
+    }
+  }
 }
 
 // Load settings
 function loadSettings() {
+  initPaths();
   try {
     if (fs.existsSync(settingsPath)) {
       return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
@@ -29,6 +35,7 @@ function loadSettings() {
 
 // Save settings
 function saveSettings(settings) {
+  initPaths();
   try {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
   } catch (error) {
@@ -425,6 +432,7 @@ const activeRecordings = new Map();
 
 // Start a streaming recording - creates temp file in dedicated temp folder
 ipcMain.handle('start-streaming-recording', async (event, { recordingId, filename }) => {
+  initPaths();
   try {
     const tempPath = path.join(tempRecordingsDir, `${recordingId}.webm.tmp`);
     const recordingsDir = getRecordingsDir();
@@ -526,6 +534,7 @@ ipcMain.handle('cancel-recording', async (event, recordingId) => {
 
 // Check for incomplete recordings (for crash recovery)
 ipcMain.handle('check-incomplete-recordings', async () => {
+  initPaths();
   try {
     const files = fs.readdirSync(tempRecordingsDir);
     const incomplete = files
@@ -549,6 +558,7 @@ ipcMain.handle('check-incomplete-recordings', async () => {
 
 // Recover incomplete recording - move temp file to final location
 ipcMain.handle('recover-recording', async (event, { recordingId, filename }) => {
+  initPaths();
   try {
     const tempPath = path.join(tempRecordingsDir, `${recordingId}.webm.tmp`);
     if (!fs.existsSync(tempPath)) {
@@ -569,6 +579,7 @@ ipcMain.handle('recover-recording', async (event, { recordingId, filename }) => 
 
 // Delete incomplete recording
 ipcMain.handle('delete-incomplete-recording', async (event, recordingId) => {
+  initPaths();
   try {
     const tempPath = path.join(tempRecordingsDir, `${recordingId}.webm.tmp`);
     if (fs.existsSync(tempPath)) {
