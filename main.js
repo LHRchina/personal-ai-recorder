@@ -259,7 +259,7 @@ ipcMain.handle('convert-to-mp3', async (event, inputPath) => {
 
     let ffmpegPath = 'ffmpeg';
     for (const p of ffmpegPaths) {
-      if (fs.existsSync(p)) {
+      if (!p.includes('.asar') && fs.existsSync(p)) {
         ffmpegPath = p;
         break;
       }

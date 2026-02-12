@@ -60,7 +60,8 @@
       "main.js",
       "preload.js",
       "src/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "!ffmpeg"
     ],
     "extraResources": [
       {
