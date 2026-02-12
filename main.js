@@ -269,8 +269,9 @@ ipcMain.handle('convert-to-mp3', async (event, inputPath) => {
       '-i', inputPath,
       '-vn',
       '-acodec', 'libmp3lame',
-      '-ab', '192k',
-      '-ar', '44100',
+      '-ab', '64k',
+      '-ar', '22050',
+      '-ac', '1',
       '-y',
       outputPath
     ]);
